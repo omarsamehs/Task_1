@@ -70,8 +70,27 @@ export async function createPerk(req, res, next) {
 // TODO
 // Update an existing perk by ID and validate only the fields that are being updated 
 export async function updatePerk(req, res, next) {
-  
+try {
+  const perks = await Perk.findById(req.params.id);
+    
+    if (!perks) return res.status(404).json({ message: 'Perk not found' });
+    const { value, error } = perkSchema.validate(req.body);
+    if (error) return res.status(400).json({ message: error.message });
+    
+    const perk = await Perk.findByIdAndUpdate(
+      req.params.id,   // the id from URL params (/perks/:id)
+      { $set: value }, // update only the validated fields
+      {
+        new: true,          // return the updated document instead of the old one
+        runValidators: true // also run Mongoose schema validation
+      }
+    );
+    if (!perk) return res.status(404).json({ message: 'Perk not found' });
+    res.json({ perk });
+  } catch (err) { next(err); }
 }
+
+
 
 
 // Delete a perk by ID
